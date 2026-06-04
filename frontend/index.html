@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsHub — 新闻阅读平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- App Shell -->
+    <div id="app" class="app">
+        <!-- Header -->
+        <header id="header" class="header">
+            <div class="header-inner">
+                <a href="#/" class="header-logo" aria-label="NewsHub 首页">
+                    <span class="logo-icon">N</span>
+                    <span class="logo-text">NewsHub</span>
+                </a>
+                <nav id="main-nav" class="main-nav" aria-label="主导航">
+                    <a href="#/" class="nav-link" data-route="/">首页</a>
+                    <a href="#/favorites" class="nav-link" data-route="/favorites" data-auth="true">收藏</a>
+                    <a href="#/history" class="nav-link" data-route="/history" data-auth="true">历史</a>
+                </nav>
+                <div class="header-actions" id="header-actions">
+                    <!-- Populated by JS -->
+                </div>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="菜单" aria-expanded="false">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
+            <nav class="mobile-nav">
+                <a href="#/" class="mobile-nav-link">首页</a>
+                <a href="#/favorites" class="mobile-nav-link" data-auth="true">收藏</a>
+                <a href="#/history" class="mobile-nav-link" data-auth="true">历史</a>
+                <div class="mobile-nav-divider"></div>
+                <div id="mobile-auth-links"></div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <main id="main-content" class="main-content" role="main">
+            <!-- Rendered by JS router -->
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-inner">
+                <p class="footer-text">&copy; 2026 NewsHub. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Templates (hidden) -->
+    <template id="tmpl-loading">
+        <div class="loading-container">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+            </div>
+            <p class="loading-text">加载中...</p>
+        </div>
+    </template>
+
+    <template id="tmpl-empty">
+        <div class="empty-state">
+            <div class="empty-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="8" y1="15" x2="16" y2="15"></line>
+                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                </svg>
+            </div>
+            <p class="empty-title" data-empty-title>暂无内容</p>
+            <p class="empty-desc" data-empty-desc></p>
+        </div>
+    </template>
+
+    <template id="tmpl-error">
+        <div class="error-state">
+            <div class="error-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <p class="error-title">加载失败</p>
+            <p class="error-desc" data-error-desc>请检查网络连接后重试</p>
+            <button class="btn btn-outline" onclick="window.location.reload()">重新加载</button>
+        </div>
+    </template>
+
+    <!-- AI 助手聊天面板 -->
+    <div id="ai-chat-overlay" class="ai-chat-overlay" aria-hidden="true">
+        <div class="ai-chat-panel" id="ai-chat-panel">
+            <div class="ai-chat-header">
+                <div class="ai-chat-header-left">
+                    <span class="ai-chat-avatar">AI</span>
+                    <div>
+                        <h3 class="ai-chat-title">NewsHub AI 助手</h3>
+                        <p class="ai-chat-subtitle">由通义千问驱动</p>
+                    </div>
+                </div>
+                <button class="ai-chat-close" id="ai-chat-close" aria-label="关闭AI助手">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="ai-chat-messages" id="ai-chat-messages">
+                <div class="ai-message ai-message-bot">
+                    <div class="ai-message-avatar">AI</div>
+                    <div class="ai-message-bubble">
+                        <p>你好！👋 我是 NewsHub AI 助手，可以帮你：</p>
+                        <ul>
+                            <li>解答新闻相关问题</li>
+                            <li>分析和总结新闻内容</li>
+                            <li>推荐你感兴趣的资讯</li>
+                        </ul>
+                        <p>有什么想了解的吗？</p>
+                    </div>
+                </div>
+            </div>
+            <div class="ai-chat-input-area">
+                <div class="ai-chat-input-row">
+                    <input
+                        type="text"
+                        class="ai-chat-input"
+                        id="ai-chat-input"
+                        placeholder="输入你的问题..."
+                        autocomplete="off"
+                        maxlength="2000"
+                    >
+                    <button class="ai-chat-send" id="ai-chat-send" aria-label="发送消息">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                </div>
+                <p class="ai-chat-hint">按 Enter 发送，Shift+Enter 换行</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 助手触发按钮 -->
+    <button class="ai-chat-fab" id="ai-chat-fab" aria-label="打开AI助手">
+        <svg class="ai-fab-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <svg class="ai-fab-icon-close" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+    </button>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
